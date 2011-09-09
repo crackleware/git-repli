@@ -1,0 +1,26 @@
+#!/bin/sh
+
+TO_ADDR=$1
+
+set -e
+
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!'; exit 1; }
+[ -e .git/git-repli-bundle ] || { echo 'use git-repli-create-bundle to create bundle of updates!'; exit 1; }
+
+AUTHOR=$(git config user.email) || { echo 'use "git config user.email ..." to set your email!'; exit 1; }
+
+[ "$GIT_REPLI_TAG" = "" ] && { GIT_REPLI_TAG=RIPLEY; }
+
+cat <<EOF
+From: $AUTHOR
+To: $TO_ADDR
+Subject: [$GIT_REPLI_TAG]
+
+EOF
+if [ "$GIT_REPLI_PLAIN" = "" ]; then
+	gpg --use-agent --armour -s -e -r $TO_ADDR < .git/git-repli-bundle
+else
+	gpg --enarmour < .git/git-repli-bundle
+fi
+echo
+

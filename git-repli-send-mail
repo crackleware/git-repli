@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+SENDMAIL="$GIT_REPLI_SENDMAIL"
+[ "$SENDMAIL" = "" ] && { SENDMAIL=sendmail; }
+
+git-repli-create-bundle
+
+for TO in "$*"; do git-repli-format-mail $TO | $SENDMAIL $TO; done
+
+git-repli-update-timestamp

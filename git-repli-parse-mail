@@ -1,0 +1,13 @@
+#!/bin/sh
+
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!'; exit 1; }
+
+tb=`mktemp .git/git-repli-bundle-received.XXXXXX`
+
+if [ "$GIT_REPLI_PLAIN" = "" ]; then
+	gpg --use-agent -d > $tb
+else
+	gpg --dearmour > $tb
+fi && git bundle unbundle $tb | while read c r; do echo $c $r; echo $c > .git/$r; done
+
+rm $tb

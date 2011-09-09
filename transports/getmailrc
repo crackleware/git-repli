@@ -1,0 +1,12 @@
+; gmail template:
+
+[retriever]
+type = SimplePOP3SSLRetriever
+server = pop.gmail.com
+username = USERNAME
+password = PASSWORD
+
+[destination]
+type = Mboxrd
+path = ./new-mail
+

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# requires: getmail
+
+pushd `dirname $0` > /dev/null
+
+getmail -r getmailrc -q --new
+cat new-mail >> all-mail
+cat new-mail | awk "/^Subject: \[$GIT_REPLI_TAG\]/ { a=1; } /^From / { a=0; } { if (a) print \$0; }"
+rm new-mail
+
+popd > /dev/null
+

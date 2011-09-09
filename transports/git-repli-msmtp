@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# requires: msmtp
+
+pushd `dirname $0` > /dev/null
+
+msmtp -C msmtprc --read-envelope-from $*
+
+popd > /dev/null
+

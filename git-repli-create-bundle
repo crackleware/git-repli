@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!'; exit 1; }
+
+AUTHOR=$(git config user.email) || { echo 'use "git config user.email ..." to set your email!'; exit 1; }
+
+TS=$(git config git-repli.lasttimestamp) || { TS=0; git config git-repli.lasttimestamp $TS; }
+
+commits () { git rev-list --all --timestamp --after=$(expr 1 + $TS) --author=$AUTHOR; }
+
+[ "$(commits)" = "" ] && exit 0
+	
+git bundle create .git/git-repli-bundle --all --after=$(expr 1 + $TS) --author=$AUTHOR
+
+git config git-repli.bundletimestamp $(commits | head -n1 | cut -d' ' -f1)
+
+

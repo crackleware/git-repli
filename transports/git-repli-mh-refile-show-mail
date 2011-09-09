@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# requires: mh
+
+SRC_FOLDER=+...
+ARCHIVE_FOLDER=+...
+
+tag="\\[$GIT_REPLI_TAG\\]"
+msgs=$(pick $SRC_FOLDER -subject $tag 2> /dev/null)
+if [ "$msgs" != "0" ]; then
+	show $SRC_FOLDER $msgs -noshowproc | egrep '^Subject: |From: ' 1>&2
+	show $SRC_FOLDER $msgs -noshowproc
+	refile $msgs -unlink -src $SRC_FOLDER $ARCHIVE_FOLDER
+	rmm +inbox $(pick +inbox -subject $tag 2> /dev/null) -unlink
+fi

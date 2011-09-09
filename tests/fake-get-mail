@@ -1,0 +1,5 @@
+#!/bin/sh
+
+pushd `dirname $0` > /dev/null
+cat emails
+popd > /dev/null
