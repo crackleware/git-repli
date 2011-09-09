@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!'; exit 1; }
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
 
 tb=`mktemp .git/git-repli-bundle-received.XXXXXX`
 
@@ -8,6 +8,13 @@ if [ "$GIT_REPLI_PLAIN" = "" ]; then
 	gpg --use-agent -d > $tb
 else
 	gpg --dearmour > $tb
-fi && git bundle unbundle $tb | while read c r; do echo $c $r; echo $c > .git/$r; done
+fi && git bundle unbundle $tb | while read c r; do
+	if [ "$GIT_REPLI_PROTECT_REFS" != "" ] && { echo $r | egrep "$GIT_REPLI_PROTECT_REFS" > /dev/null; }; then
+		echo local ref protected: $r would point to $c
+	else
+		echo $c $r
+		echo $c > .git/$r
+	fi
+done
 
 rm $tb

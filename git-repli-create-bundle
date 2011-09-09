@@ -2,9 +2,9 @@
 
 set -e
 
-[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!'; exit 1; }
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
 
-AUTHOR=$(git config user.email) || { echo 'use "git config user.email ..." to set your email!'; exit 1; }
+AUTHOR=$(git config user.email) || { echo 'use "git config user.email ..." to set your email!' 1>&2; exit 1; }
 
 TS=$(git config git-repli.lasttimestamp) || { TS=0; git config git-repli.lasttimestamp $TS; }
 

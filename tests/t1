@@ -102,4 +102,8 @@ git_log_graph
 
 send_apply_updates
 
+git-repli-update-timestamp 'expr -86400 +' # 1 day in the past, this will resend everything
+
+GIT_REPLI_PROTECT_REFS='mas.*' send_apply_updates
+
 echo test finished.
