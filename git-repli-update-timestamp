@@ -6,11 +6,7 @@ set -e
 
 TS=$(git config git-repli.bundletimestamp)
 
-if [ "$1" != "" ]; then
-	TS=$($1 $TS)
-fi
-
-echo $TS
+[ "$1" != "" ] && {	TS=$1; }
 
 git config --unset-all git-repli.lasttimestamp
 git config --replace-all git-repli.lasttimestamp $TS

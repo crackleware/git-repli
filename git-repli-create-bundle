@@ -14,7 +14,10 @@ commits () { git rev-list --all --timestamp --after=$(expr 1 + $TS) --author=$AU
 
 [ "$(commits)" = "" ] && exit 0
 
-git bundle create .git/git-repli-bundle --all --after=$(expr 1 + $TS) --author=$AUTHOR
+#COMMIT_OPTS=--author=$AUTHOR # constrained replication
+COMMIT_OPTS= # unconstrained propagation
+
+git bundle create .git/git-repli-bundle --all --after=$(expr 1 + $TS) $COMMIT_OPTS
 
 git config git-repli.bundletimestamp $(commits | head -n1 | cut -d' ' -f1)
 

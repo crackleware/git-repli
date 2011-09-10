@@ -1,43 +1,88 @@
 #!/bin/sh
 
-git_log_graph () { pwd; git log --all --graph --decorate | cat; }
-
-send_apply_updates () {
-	pushd $DIR/r1
-
-	GIT_REPLI_SENDMAIL=../fake-send-mail GIT_REPLI_PLAIN=1 \
-		git-repli-send-mail TAG1 u2@domain.local
-
-	pushd $DIR/r2
-
-	../fake-get-mail TAG1 | GIT_REPLI_PLAIN=1 git-repli-parse-mail
-
-	git_log_graph
-
-	popd
-	popd
+git_log_graph () { 
+	echo "(`pwd`)"
+	git log --all --graph --decorate --date-order --pretty='format:%h %ae: %s%d' | cat
+	echo
 }
 
-rm -rf r1 r2
+send_apply_updates () {
+	local src=$1 dst=$2
+	
+	echo "send_apply_updates: $src -> $dst"
+
+	pushd . > /dev/null
+
+	cd $D/r$src
+
+	echo
+	echo src:
+	git_log_graph
+	echo
+	
+	git branch -v --no-abbrev | cut -c3- > $D/src-branches
+
+	GIT_REPLI_SENDMAIL=../fake-send-mail GIT_REPLI_PLAIN=1 \
+		git-repli-send-mail TAGTAGTAG u$dst@domain
+
+	cd $D/r$dst
+
+	../fake-get-mail TAGTAGTAG | GIT_REPLI_PLAIN=1 git-repli-parse-mail 2>&1 | tee $D/parse-mail.log
+
+	echo
+	echo dst:
+	git_log_graph
+	echo
+
+	git branch -v --no-abbrev | cut -c3- > $D/dst-branches
+
+	popd > /dev/null
+
+	cat $D/parse-mail.log | grep -v Repository | egrep '^error: ' | {
+		local ts=x
+		while read __ c __; do
+			echo "* refetching commit: $c"
+			pushd $D/r$src > /dev/null
+			local ts1=$(git rev-list --all --timestamp | awk "/[0-9]+ $c/ { i=NR; } { if (NR == 2*i) print \$1 }")
+			popd > /dev/null
+			if [ "$ts1" = "" ]; then
+				ts=0
+				break
+			elif [ "$ts" = "x" ]; then
+				ts=$ts1
+			elif [ "$ts1" -lt "$ts" ]; then
+				ts=$ts1
+			fi
+		done
+		if [ "$ts" != "x" ]; then
+			git-repli-update-timestamp $ts # todo: protocol: $dst sends ($ts, $dst) to $src; $src flushes pending updates then processes refetches
+			send_apply_updates $src $dst
+			true
+		else
+			false
+		fi
+	} || {
+	    echo
+        diff -y $D/src-branches $D/dst-branches || { echo 'src and dst branches differ!'; exit 1; }
+	    echo
+	}
+}
 
 set -e
 
-export DIR=$(pwd)
+export D=$(pwd)
 export PATH=$(cd ..; pwd):$PATH
 
-mkdir $DIR/r1
-cd $DIR/r1
-git init
-git config user.name u1
-git config user.email u1@domain.local
+for i in 1 2 3 4; do
+	rm -rf $D/r$i || true
+	mkdir -p $D/r$i
+	cd $D/r$i
+	git init
+	git config user.name u$i
+	git config user.email u$i@domain
+done
 
-mkdir $DIR/r2
-cd $DIR/r2
-git init
-git config user.name u2
-git config user.email u2@domain.local
-
-cd $DIR/r1
+cd $D/r1
 
 date >> d1
 git add d1
@@ -46,11 +91,9 @@ git commit -a -m ...
 sleep 2
 
 date >> d1
-git commit -a -m ...
+git commit -a -m ...send
 
-git_log_graph
-
-send_apply_updates
+send_apply_updates 1 2
 
 sleep 2
 
@@ -71,11 +114,9 @@ sleep 2
 
 date >> d1
 date >> d2
-git commit -a -m ...
+git commit -a -m ...send
 
-git_log_graph
-
-send_apply_updates
+send_apply_updates 1 2
 
 git checkout master
 
@@ -96,14 +137,24 @@ git checkout exp
 sleep 2
 
 date >> d2
-git commit -a -m ...
+git commit -a -m ...send
 
-git_log_graph
+send_apply_updates 1 2
 
-send_apply_updates
+git-repli-update-timestamp 0 # this will resend everything
 
-git-repli-update-timestamp 'expr -86400 +' # 1 day in the past, this will resend everything
+GIT_REPLI_PROTECT_REFS='mas.*'
+send_apply_updates 1 2
+GIT_REPLI_PROTECT_REFS=
 
-GIT_REPLI_PROTECT_REFS='mas.*' send_apply_updates
+sleep 2
 
-echo test finished.
+date >> d3
+git add d3
+git commit -a -m ...send
+
+send_apply_updates 2 3
+
+send_apply_updates 1 4
+
+echo test passed.
