@@ -21,6 +21,6 @@ EOF
 if [ "$GIT_REPLI_PLAIN" = "1" ]; then
 	gpg --enarmour < .git/git-repli-bundle
 else
-	gpg --use-agent --armour -s -e -r $TO_ADDR < .git/git-repli-bundle
+	gpg --use-agent --armour --trust-model always -s -e -u $AUTHOR -r $TO_ADDR < .git/git-repli-bundle
 fi
 echo

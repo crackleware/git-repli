@@ -2,6 +2,8 @@
 
 set -e
 
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
+
 TAG="$1"
 shift
 
@@ -12,7 +14,16 @@ git-repli-create-bundle
 
 [ -e .git/git-repli-bundle ] || exit 0;
 
-for TO in "$*"; do git-repli-format-mail $TAG $TO | $SENDMAIL $TO; done
+for TO in $*; do 
+	echo "sending to $TO"
+	t=`mktemp .git/git-repli-email.XXXXXX`
+	if git-repli-format-mail $TAG $TO > $t; then
+		$SENDMAIL $TO < $t
+	else
+		echo "sending FAILED"
+	fi
+	rm $t
+done
 
 git-repli-update-timestamp
 
