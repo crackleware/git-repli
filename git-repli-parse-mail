@@ -5,17 +5,17 @@
 tb=`mktemp .git/git-repli-bundle-received.XXXXXX`
 
 if [ "$GIT_REPLI_PLAIN" = "1" ]; then
-	gpg --dearmour > $tb
+    gpg --dearmour > $tb
 else
-	gpg --use-agent -d > $tb
+    gpg --use-agent -d > $tb
 fi && git bundle unbundle $tb | while read c r; do
-	if { echo $r | egrep "HEAD" > /dev/null; } || \
-	   { [ "$GIT_REPLI_PROTECT_REFS" != "" ] && { echo $r | egrep "$GIT_REPLI_PROTECT_REFS" > /dev/null; } }; then
-		echo local ref protected: $r would point to $c
-	else
-		echo $c $r
-		echo $c > .git/$r
-	fi
+    if { echo $r | egrep "HEAD" > /dev/null; } || \
+       { [ "$GIT_REPLI_PROTECT_REFS" != "" ] && { echo $r | egrep "$GIT_REPLI_PROTECT_REFS" > /dev/null; } }; then
+        echo local ref protected: $r would point to $c
+    else
+        echo $c $r
+        echo $c > .git/$r
+    fi
 done
 
 rm $tb

@@ -1,71 +1,71 @@
 #!/bin/sh
 
 git_log_graph () { 
-	echo "(`pwd`)"
-	git log --all --graph --decorate --date-order --pretty='format:%h %ae: %s%d' | cat
-	echo
+    echo "(`pwd`)"
+    git log --all --graph --decorate --date-order --pretty='format:%h %ae: %s%d' | cat
+    echo
 }
 
 send_apply_updates () {
-	local src=$1 dst=$2
-	
-	echo "send_apply_updates: $src -> $dst"
+    local src=$1 dst=$2
+    
+    echo "send_apply_updates: $src -> $dst"
 
-	pushd . > /dev/null
+    pushd . > /dev/null
 
-	cd $D/r$src
+    cd $D/r$src
 
-	echo
-	echo src:
-	git_log_graph
-	echo
-	
-	git branch -v --no-abbrev | cut -c3- > $D/src-branches
+    echo
+    echo src:
+    git_log_graph
+    echo
+    
+    git branch -v --no-abbrev | cut -c3- > $D/src-branches
 
-	GIT_REPLI_SENDMAIL=../fake-send-mail GIT_REPLI_PLAIN=1 \
-		git-repli-send-mail TAGTAGTAG u$dst@domain
+    GIT_REPLI_SENDMAIL=../fake-send-mail GIT_REPLI_PLAIN=1 \
+        git-repli-send-mail TAGTAGTAG u$dst@domain
 
-	cd $D/r$dst
+    cd $D/r$dst
 
-	../fake-get-mail TAGTAGTAG | GIT_REPLI_PLAIN=1 git-repli-parse-mail 2>&1 | tee $D/parse-mail.log
+    ../fake-get-mail TAGTAGTAG | GIT_REPLI_PLAIN=1 git-repli-parse-mail 2>&1 | tee $D/parse-mail.log
 
-	echo
-	echo dst:
-	git_log_graph
-	echo
+    echo
+    echo dst:
+    git_log_graph
+    echo
 
-	git branch -v --no-abbrev | cut -c3- > $D/dst-branches
+    git branch -v --no-abbrev | cut -c3- > $D/dst-branches
 
-	popd > /dev/null
+    popd > /dev/null
 
-	cat $D/parse-mail.log | grep -v Repository | egrep '^error: ' | {
-		local ts=x
-		while read __ c __; do
-			echo "* refetching commit: $c"
-			pushd $D/r$src > /dev/null
-			local ts1=$(git rev-list --all --timestamp | awk "/[0-9]+ $c/ { i=NR; } { if (NR == 2*i) print \$1 }")
-			popd > /dev/null
-			if [ "$ts1" = "" ]; then
-				ts=0
-				break
-			elif [ "$ts" = "x" ]; then
-				ts=$ts1
-			elif [ "$ts1" -lt "$ts" ]; then
-				ts=$ts1
-			fi
-		done
-		if [ "$ts" != "x" ]; then
-			git-repli-update-timestamp $ts # todo: protocol: $dst sends ($ts, $dst) to $src; $src flushes pending updates then processes refetches
-			send_apply_updates $src $dst
-			true
-		else
-			false
-		fi
-	} || {
-	    echo
+    cat $D/parse-mail.log | grep -v Repository | egrep '^error: ' | {
+        local ts=x
+        while read __ c __; do
+            echo "* refetching commit: $c"
+            pushd $D/r$src > /dev/null
+            local ts1=$(git rev-list --all --timestamp | awk "/[0-9]+ $c/ { i=NR; } { if (NR == 2*i) print \$1 }")
+            popd > /dev/null
+            if [ "$ts1" = "" ]; then
+                ts=0
+                break
+            elif [ "$ts" = "x" ]; then
+                ts=$ts1
+            elif [ "$ts1" -lt "$ts" ]; then
+                ts=$ts1
+            fi
+        done
+        if [ "$ts" != "x" ]; then
+            git-repli-update-timestamp $ts # todo: protocol: $dst sends ($ts, $dst) to $src; $src flushes pending updates then processes refetches
+            send_apply_updates $src $dst
+            true
+        else
+            false
+        fi
+    } || {
+        echo
         diff -y $D/src-branches $D/dst-branches || { echo 'src and dst branches differ!'; exit 1; }
-	    echo
-	}
+        echo
+    }
 }
 
 set -e
@@ -74,12 +74,12 @@ export D=$(pwd)
 export PATH=$(cd ..; pwd):$PATH
 
 for i in 1 2 3 4; do
-	rm -rf $D/r$i || true
-	mkdir -p $D/r$i
-	cd $D/r$i
-	git init
-	git config user.name u$i
-	git config user.email u$i@domain
+    rm -rf $D/r$i || true
+    mkdir -p $D/r$i
+    cd $D/r$i
+    git init
+    git config user.name u$i
+    git config user.email u$i@domain
 done
 
 cd $D/r1

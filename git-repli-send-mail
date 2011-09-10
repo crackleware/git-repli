@@ -15,14 +15,14 @@ git-repli-create-bundle
 [ -e .git/git-repli-bundle ] || exit 0;
 
 for TO in $*; do 
-	echo "sending to $TO"
-	t=`mktemp .git/git-repli-email.XXXXXX`
-	if git-repli-format-mail $TAG $TO > $t; then
-		$SENDMAIL $TO < $t
-	else
-		echo "sending FAILED"
-	fi
-	rm $t
+    echo "sending to $TO"
+    t=`mktemp .git/git-repli-email.XXXXXX`
+    if git-repli-format-mail $TAG $TO > $t; then
+        $SENDMAIL $TO < $t
+    else
+        echo "sending FAILED"
+    fi
+    rm $t
 done
 
 git-repli-update-timestamp
