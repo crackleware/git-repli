@@ -10,8 +10,10 @@ TS=$(git config git-repli.lasttimestamp) || { TS=0; git config git-repli.lasttim
 
 commits () { git rev-list --all --timestamp --after=$(expr 1 + $TS) --author=$AUTHOR; }
 
+[ -e .git/git-repli-bundle ] && rm .git/git-repli-bundle
+
 [ "$(commits)" = "" ] && exit 0
-	
+
 git bundle create .git/git-repli-bundle --all --after=$(expr 1 + $TS) --author=$AUTHOR
 
 git config git-repli.bundletimestamp $(commits | head -n1 | cut -d' ' -f1)

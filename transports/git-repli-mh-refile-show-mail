@@ -1,15 +1,16 @@
 #!/bin/sh
 
-# requires: mh
+# requires: nmh
 
-SRC_FOLDER=+...
-ARCHIVE_FOLDER=+...
+TAG="\\[$1\\]"
+SRC_FOLDER="$2"
+ARCHIVE_FOLDER="$3"
 
-tag="\\[$GIT_REPLI_TAG\\]"
-msgs=$(pick $SRC_FOLDER -subject $tag 2> /dev/null)
+msgs=$(pick $SRC_FOLDER -subject $TAG 2> /dev/null)
 if [ "$msgs" != "0" ]; then
 	show $SRC_FOLDER $msgs -noshowproc | egrep '^Subject: |From: ' 1>&2
 	show $SRC_FOLDER $msgs -noshowproc
-	refile $msgs -unlink -src $SRC_FOLDER $ARCHIVE_FOLDER
-	rmm +inbox $(pick +inbox -subject $tag 2> /dev/null) -unlink
+	folder +$ARCHIVE_FOLDER -create 1>&2
+	refile $msgs -unlink -src $SRC_FOLDER $ARCHIVE_FOLDER 1>&2
+	rmm +inbox $(pick +inbox -subject $TAG 2> /dev/null) -unlink 1>&2
 fi

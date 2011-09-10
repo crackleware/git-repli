@@ -1,20 +1,21 @@
 #!/bin/sh
 
-TO_ADDR=$1
+TAG="$1"
+TO_ADDR="$2"
 
 set -e
 
 [ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
 [ -e .git/git-repli-bundle ] || { echo 'use git-repli-create-bundle to create bundle of updates!' 1>&2; exit 1; }
+[ "$TAG" != "" ] || { echo "you must specify email subject tag!" 1>&2; exit 1; }
+[ "$TO_ADDR" != "" ] || { echo "you must specify recipient's email address!" 1>&2; exit 1; }
 
 AUTHOR=$(git config user.email) || { echo 'use "git config user.email ..." to set your email!' 1>&2; exit 1; }
-
-[ "$GIT_REPLI_TAG" = "" ] && { GIT_REPLI_TAG=RIPLEY; }
 
 cat <<EOF
 From: $AUTHOR
 To: $TO_ADDR
-Subject: [$GIT_REPLI_TAG]
+Subject: [$TAG]
 
 EOF
 if [ "$GIT_REPLI_PLAIN" = "1" ]; then
@@ -23,4 +24,3 @@ else
 	gpg --use-agent --armour -s -e -r $TO_ADDR < .git/git-repli-bundle
 fi
 echo
-

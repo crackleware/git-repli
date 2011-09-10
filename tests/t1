@@ -5,12 +5,12 @@ git_log_graph () { pwd; git log --all --graph --decorate | cat; }
 send_apply_updates () {
 	pushd $DIR/r1
 
-	GIT_REPLI_TAG=TAG1 GIT_REPLI_SENDMAIL=../fake-send-mail GIT_REPLI_PLAIN=1 \
-		git-repli-send-mail u2@domain.local
+	GIT_REPLI_SENDMAIL=../fake-send-mail GIT_REPLI_PLAIN=1 \
+		git-repli-send-mail TAG1 u2@domain.local
 
 	pushd $DIR/r2
 
-	GIT_REPLI_TAG=TAG1 ../fake-get-mail | GIT_REPLI_PLAIN=1 git-repli-parse-mail
+	../fake-get-mail TAG1 | GIT_REPLI_PLAIN=1 git-repli-parse-mail
 
 	git_log_graph
 

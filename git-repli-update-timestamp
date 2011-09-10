@@ -12,4 +12,5 @@ fi
 
 echo $TS
 
-git config git-repli.lasttimestamp $TS
+git config --unset-all git-repli.lasttimestamp
+git config --replace-all git-repli.lasttimestamp $TS
