@@ -7,7 +7,11 @@ set -e
 mkdir -p .git/git-repli/refetches-sending
 touch .git/git-repli/refetches-received
 
+echo "* reading messages"
+
 git-repli-read-messages
+
+echo "* sending updates"
 
 git-repli-send-updates
 

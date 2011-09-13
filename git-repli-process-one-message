@@ -14,11 +14,11 @@ cat > $mr
 
 #[ "$(stat -c%s $mr)" = "0" ] && { echo "$0: no mail"; exit 0; }
 
-echo `pwd`/$rd 1>&2
-echo `pwd`/$mr 1>&2
-echo `pwd`/$dl 1>&2
-echo `pwd`/$ul 1>&2
-echo `pwd`/$ue 1>&2
+# echo `pwd`/$rd 1>&2
+# echo `pwd`/$mr 1>&2
+# echo `pwd`/$dl 1>&2
+# echo `pwd`/$ul 1>&2
+# echo `pwd`/$ue 1>&2
 
 get_commit_ts () { git rev-list --timestamp $1 2> /dev/null | { read ts __ && echo $ts; }; }
 
