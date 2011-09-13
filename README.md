@@ -28,18 +28,18 @@
 
 #### Full replication and synchronization iteration:
 
-        $ cd GIT_REPO_DIR; git-repli-sync
+    $ cd GIT_REPO_DIR; git-repli-sync
 
 #### Just send updates to collaborators:
 
-        $ cd GIT_REPO_DIR; git-repli-send-updates
+    $ cd GIT_REPO_DIR; git-repli-send-updates
 
 - to modify timestamp of the last bundle sending, e.g. to resend the last day's updates,
   execute "git-repli-set lasttimestamp $(( $(git-repli-get bundletimestamp) - 86400 ))"
 
 #### Just receive updates from collaborators:
 
-        $ cd GIT_REPO_DIR; git-repli-read-mail
+    $ cd GIT_REPO_DIR; git-repli-read-mail
 
 #### Configuration vars (managed with git-repli-set/get/list):
 
@@ -50,7 +50,7 @@
 - sendmail - command for sending emails
 - protected_refs - regular expression for local refs that are protected during application of remote updates
 - open - if 1, enable open submission by unsigned emails
-- refetching - if 1, support full synchronization, git-repli-readmail could send emails
+- refetching - if 1, support full synchronization, git-repli-sync could send emails
 
 #### Notes:
 
