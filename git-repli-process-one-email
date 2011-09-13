@@ -1,0 +1,94 @@
+#!/bin/sh
+
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
+
+mkdir -p .git/git-repli/incoming
+rd=$(mktemp -d .git/git-repli/incoming/receive-message.XXXXXX)
+
+mr=$rd.email
+dl=$rd.decrypt-log
+ul=$rd.unbundle-log
+ue=$rd.unbundle-err
+
+cat > $mr
+
+#[ "$(stat -c%s $mr)" = "0" ] && { echo "$0: no mail"; exit 0; }
+
+echo `pwd`/$rd 1>&2
+echo `pwd`/$mr 1>&2
+echo `pwd`/$dl 1>&2
+echo `pwd`/$ul 1>&2
+echo `pwd`/$ue 1>&2
+
+get_commit_ts () { git rev-list --timestamp $1 2> /dev/null | { read ts __ && echo $ts; }; }
+
+if [ "$(git-repli-get plain)" = "1" ]; then
+    gpg --dearmour < $mr 2> $dl | (tar xzf - -C $rd)
+else
+    gpg --use-agent -d < $mr 2> $dl | (tar xzf - -C $rd) && \
+        if [ "$(git-repli-get open)" = "1" ]; then
+            true
+        else
+            for r in $(git-repli-get collaborators); do
+                egrep "Good signature from .+<$r>" $dl > /dev/null && { ok=1; break; }
+            done
+            [ "$ok" != "" ]
+        fi
+fi && {
+    case $(cat $rd/msgtype) in
+        bundle)
+            if git bundle unbundle $rd/bundle 1> $ul 2> $ue; then
+                cat $ul | while read c r; do
+                    if { echo $r | egrep "HEAD" > /dev/null; } || \
+                       { [ "$(git-repli-get protected_refs)" != "" ] && { echo $r | egrep "$(git-repli-get protected_refs)" > /dev/null; } }; then
+                        echo local ref protected: $r would point to $c
+                    elif get_commit_ts $r && [ "$(get_commit_ts $c)" -lt "$(get_commit_ts $r)" ]; then
+                        # refs can't revert to past commits (protection from stale updates coming from "disconnected" collaborator)
+                        echo local ref protected from older: $r would point to $c
+                    else
+                        echo $c $r
+                        echo $c > .git/$r
+                    fi
+                done
+            else
+                cat $ue | grep -v Repository | egrep '^error: ' | {
+                    while read __ c __; do
+                        echo "* refetching commit: $c" 1>&2
+                        echo $c >> .git/git-repli/refetches-sending/$(cat $rd/from)
+                    done
+                }
+            fi
+            ;;
+        refetch)
+            if [ "$(git-repli-get refetching)" = "1" ]; then
+                echo "* refetching:" 1>&2
+                git rev-list --all --timestamp
+                cat $rd/commits | {
+                    ts=x
+                    while read c; do
+                        echo "  - refetching for commit $c from $(cat $rd/from)" 1>&2
+                        STEP=4*i
+                        #STEP=i+1
+                        ts1=$(git rev-list --all --timestamp | awk "BEGIN { i=0; } /[0-9]+ $c/ { i=NR; } { if (i != 0 && NR == $STEP) print \$1 }")
+                        if [ "$ts1" = "" ]; then
+                            ts=0
+                            break
+                        elif [ "$ts" = "x" ]; then
+                            ts=$ts1
+                        elif [ "$ts1" -lt "$ts" ]; then
+                            ts=$ts1
+                        fi
+                    done
+                    if [ "$ts" != "x" ]; then
+                        echo ts=$ts 1>&2
+                        echo $ts $(cat $rd/from) >> .git/git-repli/refetches-received
+                    fi
+                }    
+            fi
+            ;;
+    esac
+}
+
+#rm $rd/*; rmdir $rd
+
+

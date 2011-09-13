@@ -1,0 +1,12 @@
+#!/bin/sh
+
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
+
+mkdir -p .git/git-repli/config
+
+k=$1
+fn=.git/git-repli/config/$k
+shift
+echo "$*" > $fn
+
+

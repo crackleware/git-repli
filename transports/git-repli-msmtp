@@ -2,9 +2,7 @@
 
 # requires: msmtp
 
-pushd `dirname $0` > /dev/null
+cd `dirname $0`
 
 msmtp -C msmtprc --read-envelope-from $*
-
-popd > /dev/null
 

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+awk '
+function print_email() { print s | "git-repli-process-one-email"; close("git-repli-process-one-email"); }
+
+/^Subject: / { s = ""; }
+/^From / { print_email(); }
+{ s = s $0 "\n"; }
+
+END { print_email(); }
+'

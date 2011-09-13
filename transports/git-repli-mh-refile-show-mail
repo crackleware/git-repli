@@ -2,9 +2,10 @@
 
 # requires: nmh
 
-TAG="\\[$1\\]"
-SRC_FOLDER="$2"
-ARCHIVE_FOLDER="$3"
+SRC_FOLDER="$1"
+ARCHIVE_FOLDER="$2"
+TAG="\\[$3\\]"
+echo $0: $SRC_FOLDER $ARCHIVE_FOLDER $TAG 1>&2
 
 msgs=$(pick $SRC_FOLDER -subject $TAG 2> /dev/null)
 if [ "$msgs" != "0" ]; then

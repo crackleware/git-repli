@@ -1,160 +1,191 @@
 #!/bin/sh
 
+export D=$(pwd)
+export PATH=$(cd ..; pwd):$PATH
+
 git_log_graph () { 
     echo "(`pwd`)"
-    git log --all --graph --decorate --date-order --pretty='format:%h %ae: %s%d' | cat
+    git log --all --graph --decorate --date-order --pretty="format:%h %ad %ae: %s$1" | cat
     echo
 }
 
-send_apply_updates () {
-    local src=$1 dst=$2
+compare_repos () {
+    skip_1st_line () { awk '{ if (NR>1) print $0 }'; }
+    (cd $D/r$1; git_log_graph | skip_1st_line) > $D/log-A
+    (cd $D/r$2; git_log_graph | skip_1st_line) > $D/log-B
+    echo
+    echo "compare_repos: $1 ~ $2"
+    diff -y $D/log-A $D/log-B || { echo "repo $1 and repo $2 differ!"; echo; return 1; }
+    echo
+}
+
+send_updates () { # send_updates $src to $dst ...
+    local src=$1
+    shift; shift
+    local dsts="$*"
     
-    echo "send_apply_updates: $src -> $dst"
+    echo "send_updates: $src -> $dsts"
 
-    pushd . > /dev/null
-
+    old_dir=`pwd`
     cd $D/r$src
 
     echo
-    echo src:
-    git_log_graph
+    echo "repo #$src:"
+    git_log_graph %d
     echo
     
-    git branch -v --no-abbrev | cut -c3- > $D/src-branches
+    GIT_REPLI_SENDMAIL="sm () { tee -a $D/sent-u$src@domain | $D/fake-send-mail \$1; }; sm " \
+    GIT_REPLI_PLAIN=1 \
+    GIT_REPLI_COLLABORATORS="`for u in $dsts; do echo u$u@domain; done`" \
+        git-repli-send-updates
 
-    GIT_REPLI_SENDMAIL=../fake-send-mail GIT_REPLI_PLAIN=1 \
-        git-repli-send-mail TAGTAGTAG u$dst@domain
+    cd $old_dir
+}
 
+read_mail () {
+    local dst=$1
+
+    echo "read_mail: $dst"
+
+    old_dir=`pwd`
     cd $D/r$dst
 
-    ../fake-get-mail TAGTAGTAG | GIT_REPLI_PLAIN=1 git-repli-parse-mail 2>&1 | tee $D/parse-mail.log
+    GIT_REPLI_READMAIL="$D/fake-read-mail u$dst@domain" \
+    GIT_REPLI_PLAIN=1 \
+        git-repli-read-mail
 
     echo
-    echo dst:
-    git_log_graph
+    echo "repo #$dst:"
+    git_log_graph %d
     echo
 
-    git branch -v --no-abbrev | cut -c3- > $D/dst-branches
+    cd $old_dir
+}
 
-    popd > /dev/null
+do_sync () {
+    echo "do_sync: $1"
 
-    cat $D/parse-mail.log | grep -v Repository | egrep '^error: ' | {
-        local ts=x
-        while read __ c __; do
-            echo "* refetching commit: $c"
-            pushd $D/r$src > /dev/null
-            local ts1=$(git rev-list --all --timestamp | awk "/[0-9]+ $c/ { i=NR; } { if (NR == 2*i) print \$1 }")
-            popd > /dev/null
-            if [ "$ts1" = "" ]; then
-                ts=0
-                break
-            elif [ "$ts" = "x" ]; then
-                ts=$ts1
-            elif [ "$ts1" -lt "$ts" ]; then
-                ts=$ts1
-            fi
-        done
-        if [ "$ts" != "x" ]; then
-            git-repli-update-timestamp $ts # todo: protocol: $dst sends ($ts, $dst) to $src; $src flushes pending updates then processes refetches
-            send_apply_updates $src $dst
-            true
-        else
-            false
-        fi
-    } || {
-        echo
-        diff -y $D/src-branches $D/dst-branches || { echo 'src and dst branches differ!'; exit 1; }
-        echo
-    }
+    old_dir=`pwd`
+    cd $D/r$1
+
+    echo
+    echo "repo #$1 before sync:"
+    git_log_graph %d
+    echo
+
+    GIT_REPLI_SENDMAIL="sm () { tee -a $D/sent-u$1@domain | $D/fake-send-mail \$1; }; sm " \
+    GIT_REPLI_READMAIL="$D/fake-read-mail u$1@domain" \
+    GIT_REPLI_PLAIN=1 \
+        git-repli-sync
+
+    echo
+    echo "repo #$1 after sync:"
+    git_log_graph %d
+    echo
+
+    cd $old_dir
+}
+
+
+date +%s > $D/commit_ts
+get_next_commit_ts () {
+    cat $D/commit_ts; echo $(( `cat $D/commit_ts` + 2 )) > $D/commit_ts
+    #date +%s; sleep 2
+}
+
+add_commit () {
+    local d=$(get_next_commit_ts)
+    GIT_AUTHOR_DATE=$d GIT_COMMITTER_DATE=$d git commit -a -m "$1"
 }
 
 set -e
 
-export D=$(pwd)
-export PATH=$(cd ..; pwd):$PATH
+rm $D/sent-* || true
 
-for i in 1 2 3 4; do
+collabs=`seq 4`
+for i in $collabs; do
     rm -rf $D/r$i || true
     mkdir -p $D/r$i
     cd $D/r$i
     git init
     git config user.name u$i
     git config user.email u$i@domain
+    git-repli-set tag TAGTAGTAG
+    git-repli-set collaborators "`for u in $collabs; do [ "\$u" != "$i" ] && echo u$u@domain; done`"
 done
 
 cd $D/r1
 
 date >> d1
 git add d1
-git commit -a -m ...
-
-sleep 2
+add_commit ...
 
 date >> d1
-git commit -a -m ...send
+add_commit ...send
 
-send_apply_updates 1 2
-
-sleep 2
+send_updates 1 to 2
+read_mail 2
+compare_repos 1 2
 
 date >> d1
-git commit -a -m ...
+add_commit ...
 
 git branch exp
 git checkout exp
 
-sleep 2
-
 date >> d1
 date >> d2
 git add d2
-git commit -a -m ...
-
-sleep 2
+add_commit ...
 
 date >> d1
 date >> d2
-git commit -a -m ...send
+add_commit ...send
 
-send_apply_updates 1 2
+send_updates 1 to 2
+read_mail 2
+compare_repos 1 2
 
 git checkout master
 
-sleep 2
-
 date >> d1
 date >> d3
 git add d3
-git commit -a -m ...
-
-sleep 2
+add_commit ...
 
 date >> d3
-git commit -a -m ...
+add_commit ...
 
 git checkout exp
 
-sleep 2
-
 date >> d2
-git commit -a -m ...send
+add_commit ...send
 
-send_apply_updates 1 2
+send_updates 1 to 2
+read_mail 2
+compare_repos 1 2
 
-git-repli-update-timestamp 0 # this will resend everything
+git-repli-set lasttimestamp 0 # this will resend everything
 
-GIT_REPLI_PROTECT_REFS='mas.*'
-send_apply_updates 1 2
-GIT_REPLI_PROTECT_REFS=
-
-sleep 2
+export GIT_REPLI_PROTECTED_REFS='mas.*'
+send_updates 1 to 2
+read_mail 2
+compare_repos 1 2
+unset GIT_REPLI_PROTECTED_REFS
 
 date >> d3
 git add d3
-git commit -a -m ...send
+add_commit ...send
 
-send_apply_updates 2 3
+send_updates 2 to 3
+read_mail 3
+compare_repos 2 3
 
-send_apply_updates 1 4
+for i in `seq 5`; do
+    do_sync 1
+    do_sync 4
+    compare_repos 1 4 && break || true
+done
+compare_repos 1 4 > /dev/null
 
 echo test passed.

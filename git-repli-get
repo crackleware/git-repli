@@ -1,0 +1,54 @@
+#!/bin/sh
+
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
+
+k=$1
+
+case $k in
+    tag)
+        [ "$GIT_REPLI_TAG" != "" ] && { echo "$GIT_REPLI_TAG"; exit 0; }
+        ;;
+    collaborators)
+        [ "$GIT_REPLI_COLLABORATORS" != "" ] && { echo "$GIT_REPLI_COLLABORATORS"; exit 0; }
+        ;;
+    plain) 
+        [ "$GIT_REPLI_PLAIN" != "" ] && { echo "$GIT_REPLI_PLAIN"; exit 0; }
+        ;;
+    readmail) 
+        [ "$GIT_REPLI_READMAIL" != "" ] && { echo "$GIT_REPLI_READMAIL"; exit 0; }
+        ;;
+    sendmail) 
+        [ "$GIT_REPLI_SENDMAIL" != "" ] && { echo "$GIT_REPLI_SENDMAIL"; exit 0; }
+        ;;
+    protected_refs) 
+        [ "$GIT_REPLI_PROTECTED_REFS" != "" ] && { echo "$GIT_REPLI_PROTECTED_REFS"; exit 0; }
+        ;;
+    open) 
+        [ "$GIT_REPLI_OPEN" != "" ] && { echo "$GIT_REPLI_OPEN"; exit 0; }
+        ;;
+esac
+
+fn=.git/git-repli/config/$k
+if [ -f "$fn" ]; then
+    cat $fn
+else
+    case $k in
+        tag)            echo "RIPLEY";;
+        plain)          echo "0";;
+        readmail)       echo 'gm () { { echo "p (subject $(git-repli-get tag))"; echo "d (subject $(git-repli-get tag))"; echo q; } | mailx; }; gm ';;
+        sendmail)       echo "mailx";;
+        protected_refs) echo "";;
+        open)           echo "0";;
+        refetching)     echo "1";;
+        *)
+            fn=.git/git-repli/config/$k
+            if [ -f "$fn" ]; then
+                cat $fn
+            else
+                echo "git-repli-get: unknown setting $k!" 1<&2
+                exit 1
+            fi
+            ;;
+    esac
+fi
+

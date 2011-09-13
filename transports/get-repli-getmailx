@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# gmail template:
+
+mailx -S password-USERNAME@imap.gmail.com=PASSWORD -f imaps://USERNAME@imap.gmail.com/$1 <<EOF
+print (subject $1)
+move (subject $1) imaps://USERNAME@imap.gmail.com/$1-Processed
+quit
+EOF
+
+# or
+
+# mailx -S password-USERNAME@imap.gmail.com=PASSWORD -f imaps://USERNAME@imap.gmail.com/$1-Incoming <<EOF
+# print \*
+# move (subject $1) imaps://USERNAME@imap.gmail.com/$1-Processed
+# quit
+# EOF

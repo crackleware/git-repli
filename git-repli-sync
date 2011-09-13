@@ -1,0 +1,38 @@
+#!/bin/sh
+
+set -e
+
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
+
+mkdir -p .git/git-repli/refetches-sending
+touch .git/git-repli/refetches-received
+
+git-repli-read-mail
+
+git-repli-send-updates
+
+(cd .git/git-repli/refetches-sending; ls -1) | while read to; do
+    echo "sending refetch to $to"
+    rf=.git/git-repli/refetches-sending/$to
+
+    mkdir -p .git/git-repli
+    t=$(mktemp .git/git-repli/email.XXXXXX)
+
+    md=$(git-repli-new-message refetch)
+    cp $rf $md/commits
+
+    git-repli-format-message $md $to | tee $t | eval $(git-repli-get sendmail) $to
+
+    rm $t
+    rm $rf
+done
+
+#old_ts=$(git-repli-get lasttimestamp)
+cat .git/git-repli/refetches-received | while read ts from; do
+    echo "received refetch from $from: ts=$ts"
+    git-repli-set lasttimestamp $ts
+    GIT_REPLI_COLLABORATORS=$from git-repli-send-updates
+done
+#git-repli-set lasttimestamp $old_ts
+truncate --size=0 .git/git-repli/refetches-received
+

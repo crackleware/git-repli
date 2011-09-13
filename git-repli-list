@@ -1,0 +1,16 @@
+#!/bin/sh
+
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
+
+for k in \
+    tag \
+    collaborators \
+    plain \
+    readmail \
+    sendmail \
+    protected_refs \
+    open \
+    refetching \
+; do
+    printf "%15s: %s\n" $k "$(git-repli-get $k)"
+done

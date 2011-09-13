@@ -4,21 +4,22 @@ set -e
 
 [ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
 
+mkdir -p .git/git-repli
+
 AUTHOR=$(git config user.email) || { echo 'use "git config user.email ..." to set your email!' 1>&2; exit 1; }
 
-TS=$(git config git-repli.lasttimestamp) || { TS=0; git config git-repli.lasttimestamp $TS; }
-
-commits () { git rev-list --all --timestamp --after=$(expr 1 + $TS) --author=$AUTHOR; }
-
-[ -e .git/git-repli-bundle ] && rm .git/git-repli-bundle
-
-[ "$(commits)" = "" ] && exit 0
+TS=$(git-repli-get lasttimestamp) || { TS=0; git-repli-set lasttimestamp $TS; }
 
 #COMMIT_OPTS=--author=$AUTHOR # constrained replication
 COMMIT_OPTS= # unconstrained propagation
 
-git bundle create .git/git-repli-bundle --all --after=$(expr 1 + $TS) $COMMIT_OPTS
+commits () { git rev-list --all --timestamp --after=$((1 + $TS)) $COMMIT_OPTS 2> /dev/null; }
 
-git config git-repli.bundletimestamp $(commits | head -n1 | cut -d' ' -f1)
+[ -e .git/git-repli/bundle ] && rm .git/git-repli/bundle
 
+[ "$(commits)" = "" ] && exit 0
+
+git bundle create .git/git-repli/bundle --all --after=$((1 + $TS)) $COMMIT_OPTS
+
+git-repli-set bundletimestamp $(commits | head -n1 | cut -d' ' -f1)
 

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
+
+mkdir -p .git/git-repli/outgoing
+md=$(mktemp -d .git/git-repli/outgoing/send-message.XXXXXX)
+
+echo "$1" > $md/msgtype
+git config user.email > $md/from
+
+echo $md

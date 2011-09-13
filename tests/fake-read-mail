@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd `dirname $0`
+cat mbox-$1
+truncate --size=0 mbox-$1

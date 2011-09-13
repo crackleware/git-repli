@@ -1,0 +1,27 @@
+#!/bin/sh
+
+set -e
+
+[ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
+
+git-repli-create-bundle
+
+[ -e .git/git-repli/bundle ] || { echo 'empty bundle'; exit 0; }
+
+TAG=$(git-repli-get tag)
+
+for to in $(git-repli-get collaborators); do 
+    echo "sending to $to"
+    mkdir -p .git/git-repli
+    t=$(mktemp .git/git-repli/email.XXXXXX)
+
+    md=$(git-repli-new-message bundle)
+    cp .git/git-repli/bundle $md/bundle
+
+    git-repli-format-message $md $to | tee $t | eval $(git-repli-get sendmail) $to
+
+    rm $t
+done
+
+git-repli-set lasttimestamp $(git-repli-get bundletimestamp)
+

@@ -1,16 +1,15 @@
 #!/bin/sh
 
-TAG="$1"
+MSG_DIR="$1"
 TO_ADDR="$2"
 
 set -e
 
 [ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
-[ -e .git/git-repli-bundle ] || { echo 'use git-repli-create-bundle to create bundle of updates!' 1>&2; exit 1; }
-[ "$TAG" != "" ] || { echo "you must specify email subject tag!" 1>&2; exit 1; }
 [ "$TO_ADDR" != "" ] || { echo "you must specify recipient's email address!" 1>&2; exit 1; }
 
 AUTHOR=$(git config user.email) || { echo 'use "git config user.email ..." to set your email!' 1>&2; exit 1; }
+TAG=$(git-repli-get tag)
 
 cat <<EOF
 From: $AUTHOR
@@ -18,9 +17,12 @@ To: $TO_ADDR
 Subject: [$TAG]
 
 EOF
-if [ "$GIT_REPLI_PLAIN" = "1" ]; then
-    gpg --enarmour < .git/git-repli-bundle
+
+(cd $MSG_DIR; tar czf - *) | if [ "$(git-repli-get plain)" = "1" ]; then
+    gpg --enarmour
 else
-    gpg --use-agent --armour --trust-model always -s -e -u $AUTHOR -r $TO_ADDR < .git/git-repli-bundle
+    gpg --use-agent --armour --trust-model always -s -e -u $AUTHOR -r $TO_ADDR
 fi
 echo
+
+#rm $MSG_DIR/*; rmdir $MSG_DIR
