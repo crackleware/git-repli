@@ -34,7 +34,7 @@ send_updates () { # send_updates $src to $dst ...
     git_log_graph %d
     echo
     
-    GIT_REPLI_SENDMAIL="sm () { tee -a $D/sent-u$src@domain | $D/fake-send-mail \$1; }; sm " \
+    GIT_REPLI_SENDMESSAGES="sm () { tee -a $D/sent-u$src@domain | $D/fake-send-mail \$1; }; sm " \
     GIT_REPLI_PLAIN=1 \
     GIT_REPLI_COLLABORATORS="`for u in $dsts; do echo u$u@domain; done`" \
         git-repli-send-updates
@@ -42,17 +42,17 @@ send_updates () { # send_updates $src to $dst ...
     cd $old_dir
 }
 
-read_mail () {
+read_messages () {
     local dst=$1
 
-    echo "read_mail: $dst"
+    echo "read_messages: $dst"
 
     old_dir=`pwd`
     cd $D/r$dst
 
-    GIT_REPLI_READMAIL="$D/fake-read-mail u$dst@domain" \
+    GIT_REPLI_READMESSAGES="$D/fake-read-mail u$dst@domain" \
     GIT_REPLI_PLAIN=1 \
-        git-repli-read-mail
+        git-repli-read-messages
 
     echo
     echo "repo #$dst:"
@@ -73,8 +73,8 @@ do_sync () {
     git_log_graph %d
     echo
 
-    GIT_REPLI_SENDMAIL="sm () { tee -a $D/sent-u$1@domain | $D/fake-send-mail \$1; }; sm " \
-    GIT_REPLI_READMAIL="$D/fake-read-mail u$1@domain" \
+    GIT_REPLI_SENDMESSAGES="sm () { tee -a $D/sent-u$1@domain | $D/fake-send-mail \$1; }; sm " \
+    GIT_REPLI_READMESSAGES="$D/fake-read-mail u$1@domain" \
     GIT_REPLI_PLAIN=1 \
         git-repli-sync
 
@@ -124,7 +124,7 @@ date >> d1
 add_commit ...send
 
 send_updates 1 to 2
-read_mail 2
+read_messages 2
 compare_repos 1 2
 
 date >> d1
@@ -143,7 +143,7 @@ date >> d2
 add_commit ...send
 
 send_updates 1 to 2
-read_mail 2
+read_messages 2
 compare_repos 1 2
 
 git checkout master
@@ -162,14 +162,14 @@ date >> d2
 add_commit ...send
 
 send_updates 1 to 2
-read_mail 2
+read_messages 2
 compare_repos 1 2
 
 git-repli-set lasttimestamp 0 # this will resend everything
 
 export GIT_REPLI_PROTECTED_REFS='mas.*'
 send_updates 1 to 2
-read_mail 2
+read_messages 2
 compare_repos 1 2
 unset GIT_REPLI_PROTECTED_REFS
 
@@ -178,7 +178,7 @@ git add d3
 add_commit ...send
 
 send_updates 2 to 3
-read_mail 3
+read_messages 3
 compare_repos 2 3
 
 for i in `seq 5`; do

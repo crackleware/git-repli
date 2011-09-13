@@ -6,8 +6,8 @@ for k in \
     tag \
     collaborators \
     plain \
-    readmail \
-    sendmail \
+    readmessages \
+    sendmessages \
     protected_refs \
     open \
     refetching \

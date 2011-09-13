@@ -7,7 +7,7 @@ set -e
 mkdir -p .git/git-repli/refetches-sending
 touch .git/git-repli/refetches-received
 
-git-repli-read-mail
+git-repli-read-messages
 
 git-repli-send-updates
 
@@ -16,12 +16,12 @@ git-repli-send-updates
     rf=.git/git-repli/refetches-sending/$to
 
     mkdir -p .git/git-repli
-    t=$(mktemp .git/git-repli/email.XXXXXX)
+    t=$(mktemp .git/git-repli/message.XXXXXX)
 
     md=$(git-repli-new-message refetch)
     cp $rf $md/commits
 
-    git-repli-format-message $md $to | tee $t | eval $(git-repli-get sendmail) $to
+    git-repli-format-message $md $to | tee $t | eval $(git-repli-get sendmessages) $to
 
     rm $t
     rm $rf

@@ -1,10 +1,15 @@
-## Replication of git objects and refs by (encrypted) emails
+## Replication of git objects and refs by (encrypted) higher latency messages
 
 ### Requirements
 
 - git
 - gpg
-- mailx + sendmail (or alternatives like getmail + mstmp, ...)
+- a message transport, for example:
+  - email based - scriptable MUA + MTA/MDA (heirloom-mailx + sendmail, getmail + msmtp, ...)
+  - sneakernet
+  - other custom transports
+
+Example transport scripts are in _transports_ subdir.
 
 ### Use
 
@@ -12,18 +17,21 @@
 
 - initializing new repository:
 
+        $ mkdir -p GIT_REPO_DIR
         $ cd GIT_REPO_DIR
         $ git init
         $ git config user.name '...'
-        $ git config user.email '...'
+        $ git config user.email 'myself@domainM.com'
 
 - git-repli setup:
 
         $ cd GIT_REPO_DIR
         $ git-repli-set tag SUBJECT_TAG
         $ git-repli-set collaborators mycollaborator1@domainA.com ...
+        $ git-repli-set readmessages ... # optional
+        $ git-repli-set sendmessages ... # optional
 
-- if you want encrypted email communication exchange pub keys with
+- if you want encrypted communication exchange pub keys with
   collaborators (gpg --gen-key, gpg --export ..., gpg --import)
 
 #### Full replication and synchronization iteration:
@@ -39,18 +47,18 @@
 
 #### Just receive updates from collaborators:
 
-    $ cd GIT_REPO_DIR; git-repli-read-mail
+    $ cd GIT_REPO_DIR; git-repli-read-messages
 
 #### Configuration vars (managed with git-repli-set/get/list):
 
-- tag - tag inserted into email subject header, used to identify relevant emails
-- collaborators - list of collaborator email addresses
-- plain - if 1, plain (unencrypted) emails are used
-- readmail - command for getting relevant emails 
-- sendmail - command for sending emails
+- tag - tag inserted into message subject header, used to identify relevant messages
+- collaborators - list of collaborator addresses
+- plain - if 1, plain (unencrypted) messages are used
+- readmessages - command for getting relevant messages 
+- sendmessages - command for sending messages
 - protected_refs - regular expression for local refs that are protected during application of remote updates
-- open - if 1, enable open submission by unsigned emails
-- refetching - if 1, support full synchronization, git-repli-sync could send emails
+- open - if 1, enable open submission by unsigned messages
+- refetching - if 1, support full synchronization, git-repli-sync could send messages
 
 #### Notes:
 
@@ -58,8 +66,10 @@
 
 ### Todo
 
-- splitting/joining bundles into/from multiple emails
-- support for other transports
+- explicit remotely initiated synchronization
+- splitting/joining git-repli messages into/from multiple transport messages
+- more efficient synchronization/refetching (better basis for "git bundle create")
+- additional example transport scripts
 
 ### Related
 

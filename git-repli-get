@@ -14,11 +14,11 @@ case $k in
     plain) 
         [ "$GIT_REPLI_PLAIN" != "" ] && { echo "$GIT_REPLI_PLAIN"; exit 0; }
         ;;
-    readmail) 
-        [ "$GIT_REPLI_READMAIL" != "" ] && { echo "$GIT_REPLI_READMAIL"; exit 0; }
+    readmessages) 
+        [ "$GIT_REPLI_READMESSAGES" != "" ] && { echo "$GIT_REPLI_READMESSAGES"; exit 0; }
         ;;
-    sendmail) 
-        [ "$GIT_REPLI_SENDMAIL" != "" ] && { echo "$GIT_REPLI_SENDMAIL"; exit 0; }
+    sendmessages) 
+        [ "$GIT_REPLI_SENDMESSAGES" != "" ] && { echo "$GIT_REPLI_SENDMESSAGES"; exit 0; }
         ;;
     protected_refs) 
         [ "$GIT_REPLI_PROTECTED_REFS" != "" ] && { echo "$GIT_REPLI_PROTECTED_REFS"; exit 0; }
@@ -35,8 +35,8 @@ else
     case $k in
         tag)            echo "RIPLEY";;
         plain)          echo "0";;
-        readmail)       echo 'gm () { { echo "p (subject $(git-repli-get tag))"; echo "d (subject $(git-repli-get tag))"; echo q; } | mailx; }; gm ';;
-        sendmail)       echo "mailx";;
+        readmessages)   echo 'gm () { { echo "p (subject $(git-repli-get tag))"; echo "d (subject $(git-repli-get tag))"; echo q; } | mailx; }; gm ';;
+        sendmessages)   echo "mailx";;
         protected_refs) echo "";;
         open)           echo "0";;
         refetching)     echo "1";;

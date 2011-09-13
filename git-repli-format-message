@@ -25,4 +25,4 @@ else
 fi
 echo
 
-#rm $MSG_DIR/*; rmdir $MSG_DIR
+rm $MSG_DIR/*; rmdir $MSG_DIR

@@ -62,14 +62,14 @@ fi && {
         refetch)
             if [ "$(git-repli-get refetching)" = "1" ]; then
                 echo "* refetching:" 1>&2
-                git rev-list --all --timestamp
+                git rev-list --all --timestamp --date-order
                 cat $rd/commits | {
                     ts=x
                     while read c; do
                         echo "  - refetching for commit $c from $(cat $rd/from)" 1>&2
                         STEP=4*i
                         #STEP=i+1
-                        ts1=$(git rev-list --all --timestamp | awk "BEGIN { i=0; } /[0-9]+ $c/ { i=NR; } { if (i != 0 && NR == $STEP) print \$1 }")
+                        ts1=$(git rev-list --all --timestamp --date-order | awk "BEGIN { i=0; } /[0-9]+ $c/ { i=NR; } { if (i != 0 && NR == $STEP) print \$1 }")
                         if [ "$ts1" = "" ]; then
                             ts=0
                             break
@@ -89,6 +89,5 @@ fi && {
     esac
 }
 
-#rm $rd/*; rmdir $rd
-
+rm $rd/*; rmdir $rd
 

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# requires: heirloom-mailx
+
 # gmail template:
 
 mailx -S password-USERNAME@imap.gmail.com=PASSWORD -f imaps://USERNAME@imap.gmail.com/$1 <<EOF

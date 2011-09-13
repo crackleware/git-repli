@@ -13,12 +13,12 @@ TAG=$(git-repli-get tag)
 for to in $(git-repli-get collaborators); do 
     echo "sending to $to"
     mkdir -p .git/git-repli
-    t=$(mktemp .git/git-repli/email.XXXXXX)
+    t=$(mktemp .git/git-repli/message.XXXXXX)
 
     md=$(git-repli-new-message bundle)
     cp .git/git-repli/bundle $md/bundle
 
-    git-repli-format-message $md $to | tee $t | eval $(git-repli-get sendmail) $to
+    git-repli-format-message $md $to | tee $t | eval $(git-repli-get sendmessages) $to
 
     rm $t
 done

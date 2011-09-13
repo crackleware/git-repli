@@ -1,0 +1,11 @@
+#!/bin/sh
+
+awk '
+function print_message() { print s | "git-repli-process-one-message"; close("git-repli-process-one-message"); }
+
+/^Subject: / { s = ""; }
+/^From / { print_message(); }
+{ s = s $0 "\n"; }
+
+END { print_message(); }
+'
