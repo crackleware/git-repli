@@ -75,3 +75,6 @@ Example transport scripts are in _transports_ subdir.
 
 - "git bundle", "git format-patch" and "git am" commands
 
+### Contact
+
+predrg@gmail.com
