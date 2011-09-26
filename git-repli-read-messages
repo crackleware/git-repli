@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 [ -d .git ] || { echo 'execute me in root repository dir (where .git subdir is located)!' 1>&2; exit 1; }
 
 eval $(git-repli-get readmessages) $(git-repli-get tag) | git-repli-handle-messages
