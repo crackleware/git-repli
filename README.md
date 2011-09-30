@@ -66,6 +66,7 @@ Example transport scripts are in _transports_ subdir.
 
 ### Todo
 
+- add git-send-mail transport example
 - explicit remotely initiated synchronization
 - splitting/joining git-repli messages into/from multiple transport messages
 - more efficient synchronization/refetching (better basis for "git bundle create")
